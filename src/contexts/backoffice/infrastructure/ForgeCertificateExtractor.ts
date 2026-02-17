@@ -21,24 +21,72 @@ export class ForgeCertificateExtractor implements CertificateClient {
           const bags = p12.getBags({ bagType: forge.pki.oids.certBag });
           const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
           
+          const formatAttributes = (attributes: any) => {
+            if (!attributes || Object.keys(attributes).length === 0) return '';
+            
+            let output = 'Bag Attributes\n';
+            
+            // Helper to format hex string
+            const toHex = (str: string) => {
+                let hex = '';
+                for(let i = 0; i < str.length; i++) {
+                    const byte = str.charCodeAt(i).toString(16).toUpperCase();
+                    hex += (byte.length < 2 ? '0' : '') + byte + ' '; 
+                }
+                return hex.trim();
+            };
+
+            if (attributes.localKeyId) {
+                // localKeyId in forge is usually an array of strings (bytes)
+                const localKeyId = attributes.localKeyId[0];
+                output += `    localKeyID: ${toHex(localKeyId)}\n`;
+            }
+            
+            if (attributes.friendlyName) {
+                const friendlyName = attributes.friendlyName[0];
+                output += `    friendlyName: ${friendlyName}\n`;
+            }
+
+            return output;
+          };
+
           let pem = '';
 
           // Add keys
-          if (keyBags[forge.pki.oids.pkcs8ShroudedKeyBag]) {
-             keyBags[forge.pki.oids.pkcs8ShroudedKeyBag].forEach((bag) => {
-               if (bag.key) {
-                 pem += forge.pki.privateKeyToPem(bag.key);
-               }
-             });
+          const keyBagType = forge.pki.oids.pkcs8ShroudedKeyBag;
+          if (keyBags && keyBags[keyBagType]) {
+             const bags = keyBags[keyBagType];
+             if (bags) {
+                bags.forEach((bag) => {
+                  if (bag.key) {
+                    pem += formatAttributes(bag.attributes);
+                    pem += 'Key Attributes: <No Attributes>\n';
+                    pem += forge.pki.privateKeyToPem(bag.key);
+                  }
+                });
+             }
           }
 
           // Add Certificates
-           if (bags[forge.pki.oids.certBag]) {
-            bags[forge.pki.oids.certBag].forEach((bag) => {
-              if (bag.cert) {
-                pem += forge.pki.certificateToPem(bag.cert);
-              }
-            });
+           const certBagType = forge.pki.oids.certBag;
+           if (bags && bags[certBagType]) {
+            const certBags = bags[certBagType];
+            if (certBags) {
+                certBags.forEach((bag) => {
+                  if (bag.cert) {
+                    pem += formatAttributes(bag.attributes);
+                    
+                    // Add subject and issuer as comments
+                    const subject = bag.cert.subject.attributes.map(attr => `/${attr.shortName}=${attr.value}`).join('');
+                    const issuer = bag.cert.issuer.attributes.map(attr => `/${attr.shortName}=${attr.value}`).join('');
+                    
+                    pem += `subject=${subject}\n`;
+                    pem += `issuer=${issuer}\n`;
+                    
+                    pem += forge.pki.certificateToPem(bag.cert);
+                  }
+                });
+            }
           }
           
           const blob = new Blob([pem], { type: 'application/x-pem-file' });
