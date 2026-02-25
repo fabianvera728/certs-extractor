@@ -63,7 +63,7 @@ export const UploadForm = () => {
               ) : (
                 <>
                   <p className="font-medium text-white">Arrastra tu certificado aquí</p>
-                  <p className="text-sm text-gray-500 mt-1">or click to browse</p>
+                  <p className="text-sm text-gray-500 mt-1">o click to browse</p>
                 </>
               )}
             </div>
@@ -71,7 +71,7 @@ export const UploadForm = () => {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-300 ml-1">Password</label>
+          <label className="text-sm font-medium text-gray-300 ml-1">Contraseña</label>
           <div className="relative group">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
             <input
