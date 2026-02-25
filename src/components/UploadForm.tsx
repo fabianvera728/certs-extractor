@@ -62,7 +62,7 @@ export const UploadForm = () => {
                 <p className="font-medium text-white">{file.name}</p>
               ) : (
                 <>
-                  <p className="font-medium text-white">Drop your certificate here</p>
+                  <p className="font-medium text-white">Arrastra tu certificado aquí</p>
                   <p className="text-sm text-gray-500 mt-1">or click to browse</p>
                 </>
               )}
